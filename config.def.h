@@ -7,7 +7,7 @@
  * %i is only needed for VOL_STR */
 #define VOL_MUTE_STR         "muted"
 #define VOL_ZERO_STR         "0%%"
-#define VOL_STR              "%i%%"
+#define VOL_STR              "%d%%"
 
 /* symbols/text for battery status */
 #define BATT_CHARGING_STR    "+"
@@ -50,13 +50,16 @@
 - uid [argument: none]                          : uid of current user 
 - uptime [argument: none]                       : uptime 
 - username [argument: none]                     : username of current user 
-- vol_perc [argument: soundcard]                : alsa volume and mute status in percent 
+- vol_perc_alsa [argument: soundcard]           : alsa volume and mute status in percent 
+- vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
+- pulse_profile [argument: none]                : profile of pulse volume being displayed, 
+                                                only while vol_perc_pulse is in use
 - wifi_essid [argument: wifi card interface]    : wifi essid 
 - wifi_perc [argument: none]                    : wifi signal in percent */
 
-#define STATUS_FORMAT "vol: %s bat: %s[%s] wifi: %s[%s] | %s"
+#define STATUS_FORMAT "vol: %s[%s] bat: %s[%s] wifi: %s[%s] | %s"
 #define STATUS_CONTENT \
-    vol_perc("hw:0"), \
+    pulse_profile(), vol_perc_pulse(), \
     battery_perc("BAT0"), battery_state("BAT0"), \
     wifi_essid("wlp3s0"), wifi_perc(),\
     datetime("%x %X")

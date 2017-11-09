@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
+#include <pulse/pulseaudio.h>
 
 typedef enum { STDOUT, XROOT } output;
 
@@ -59,21 +60,28 @@ static char *temp(const char *file);
 static char *uid(void);
 static char *uptime(void);
 static char *username(void);
-static char *vol_perc(const char *card);
+static char *vol_perc_alsa(const char *card);
+static char *vol_perc_pulse(pa_threaded_mainloop *m);
+static char *pulse_profile(void);
 static char *wifi_essid(const char *iface);
 static char *wifi_perc(void);
 static void sighandler(const int signo);
 static void update_status(output dest, const char *str);
+static void pulse_context_state_cb(pa_context *c, void *userdata);
+static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
+
+#include "config.h"
 
 static unsigned short int done;
 static Display *display;
+static char pulse_vol_str[80] = UNKNOWN_STR;
+static  char pulse_profile_str[80] = UNKNOWN_STR;
 
 #define RETURN_FORMAT(len, format, ...)\
     static char ret_str[len];\
     sprintf(ret_str, format, ##__VA_ARGS__);\
     return ret_str;
 
-#include "config.h"
 
 static char *
 battery_perc(const char *bat)
@@ -713,7 +721,7 @@ uid(void)
 
 
 static char *
-vol_perc(const char *card)
+vol_perc_alsa(const char *card)
 {
     int mute;
     long int vol, max, min;
@@ -752,6 +760,71 @@ vol_perc(const char *card)
         RETURN_FORMAT(20, VOL_ZERO_STR);
     } else {
         RETURN_FORMAT(20, VOL_STR, vol_perc);
+    }
+}
+
+static char *
+vol_perc_pulse(pa_threaded_mainloop *m)
+{
+    pa_threaded_mainloop_lock(m);
+
+    pa_context *c = pa_context_new(pa_threaded_mainloop_get_api(m), "sstat_volmon");
+    pa_context_set_state_callback(c, pulse_context_state_cb, NULL);
+    pa_context_connect(c, NULL, PA_CONTEXT_NOFLAGS, NULL);
+    assert(c);
+
+    pa_threaded_mainloop_unlock(m);
+
+    RETURN_FORMAT(80, pulse_vol_str);
+}
+
+static char *
+pulse_profile(void)
+{
+    RETURN_FORMAT(80, pulse_profile_str);
+}
+
+static void
+pulse_context_state_cb(pa_context *c, void *userdata)
+{
+    switch(pa_context_get_state(c)) {
+        case PA_CONTEXT_CONNECTING:
+        case PA_CONTEXT_AUTHORIZING:
+        case PA_CONTEXT_SETTING_NAME:
+            break;
+        case PA_CONTEXT_READY:
+            pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            break;
+        case PA_CONTEXT_FAILED:
+        default:
+            fprintf(stderr, "pulse connection failure: %s\n",
+                    pa_strerror(pa_context_errno(c)));
+
+            sprintf(pulse_vol_str, UNKNOWN_STR);
+            sprintf(pulse_profile_str, UNKNOWN_STR);
+
+            pa_context_unref(c);
+            break;
+    }
+}
+
+static void
+pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata)
+{
+    if (sink_info != NULL) {
+        sprintf(pulse_profile_str, sink_info->name);
+
+        uint16_t vol = pa_cvolume_avg(&sink_info->volume) * 100 /
+            (PA_VOLUME_NORM-PA_VOLUME_MUTED);
+
+        if (sink_info->mute) {
+            sprintf(pulse_vol_str, VOL_MUTE_STR);
+        } else if (vol == 0) {
+            sprintf(pulse_vol_str, VOL_ZERO_STR "%%");
+        } else {
+            sprintf(pulse_vol_str, VOL_STR "%%", vol+1);
+        }
+        pa_context_unref(c);
     }
 }
 
@@ -926,8 +999,14 @@ main(int argc, char *argv[])
 #define cpu_perc()          cpu_perc(ps_old)
 #define net_up(interface)   net_up(&tx_old, interface)
 #define net_down(interface) net_down(&rx_old, interface)
+#define vol_perc_pulse()    vol_perc_pulse(m)
     long double ps_old[4];
     double rx_old, tx_old;
+
+    /* init pulseaudio */
+    pa_threaded_mainloop *m = pa_threaded_mainloop_new();
+    pa_threaded_mainloop_start(m);
+    assert(m);
 
     /* main loop, 
      * make sure to keep delay exactly one second */
@@ -954,6 +1033,10 @@ main(int argc, char *argv[])
         update_status(dest, NULL);
         XCloseDisplay(display);
     }
+
+    /* cleanup pulse */
+    pa_threaded_mainloop_stop(m);
+    pa_threaded_mainloop_free(m);
 
     return 0;
 }

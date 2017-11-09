@@ -10,7 +10,7 @@
  * %i is only needed for VOL_STR */
 #define VOL_MUTE_STR         icon("") "mute"
 #define VOL_ZERO_STR         icon("") "0%%"
-#define VOL_STR              icon("") "%i%%"
+#define VOL_STR              icon("") "%d%%"
 
 /* symbols/text for battery status */
 #define BATT_CHARGING_STR    ""
@@ -53,35 +53,38 @@
 - uid [argument: none]                          : uid of current user 
 - uptime [argument: none]                       : uptime 
 - username [argument: none]                     : username of current user 
-- vol_perc [argument: soundcard]                : alsa volume and mute status in percent 
+- vol_perc_alsa [argument: soundcard]           : alsa volume and mute status in percent 
+- vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
+- pulse_profile [argument: none]                : profile of pulse volume being displayed, 
+                                                only while vol_perc_pulse is in use
 - wifi_essid [argument: wifi card interface]    : wifi essid 
 - wifi_perc [argument: none]                    : wifi signal in percent */
 
-/*                                          FORMAT */
+/*                                      FORMAT */
 #define STATUS_FORMAT \
-    "情報%s"                                /* volume */\
-    icon("") "%s %s%s"                    /* battery */\
-    icon("") "%s %.2s/%.3sGB"            /* disk */\
-    icon("") "%s %s %s %s"             /* net */\
-    icon("") "%s %2s %.5sGB %s %s"    /* sys */\
-    "%s"                                  /* datetime */
+    "情報%s"                         /* volume */\
+    icon("") "%s %s%s"             /* battery */\
+    icon("") "%s %.2s/%.3sGB"     /* disk */\
+    icon("") "%s %s %s %s"      /* net */\
+    icon("") "%s %2s %.5sGB %s %s" /* sys */\
+    "%s"                           /* datetime */
 
-/*                                          CONTENT */
+/*                                      CONTENT */
 #define STATUS_CONTENT \
-    vol_perc("hw:0"),                       /* volume */\
-    battery_time_smapi("BAT0"),             /* battery */\
+    vol_perc_pulse(),                /* volume */\
+    battery_time_smapi("BAT0"),      /* battery */\
     battery_state_smapi("BAT0"),\
     battery_perc_smapi("BAT0"),\
-    disk_io(),                              /* disk */\
+    disk_io(),                       /* disk */\
     disk_used("/"),\
     disk_total("/"),\
-    ip("wlp3s0"),                           /* net */\
+    ip("wlp3s0"),                    /* net */\
     wifi_perc(),\
     net_up("wlp3s0"),\
     net_down("wlp3s0"),\
-    cpu_freq(),                             /* sys */\
+    cpu_freq(),                      /* sys */\
     cpu_perc(),\
     ram_used(),\
     temp("/sys/class/hwmon/hwmon0/temp1_input"),\
     fan_ibm(),\
-    datetime("%F %T")                       /* datetime */
+    datetime("%F %T")               /* datetime */

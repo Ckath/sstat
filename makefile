@@ -6,7 +6,7 @@ VERSION = 0.2
 CC = gcc
 SRC = ${NAME}.c
 OBJ = ${SRC:.c=.o}
-CFLAGS = `pkg-config --libs x11 alsa` -Wno-unused-variable -Wno-unused-function -Wall -Wextra -Os -DVERSION=\"${VERSION}\" -D_GNU_SOURCE
+CFLAGS = `pkg-config --libs libpulse x11 alsa` -Wno-discarded-qualifiers -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wall -Wextra -Os -DVERSION=\"${VERSION}\" -D_GNU_SOURCE
 DESTDIR = /usr/local
 
 all: options ${NAME}
@@ -37,9 +37,9 @@ clean:
 install: ${NAME}
 	@echo installing executable file to ${DESTDIR}/bin
 	@mkdir -p ${DESTDIR}/bin
-	@cp -f ${NAME} ${DESTDIR}/bin
-	@chmod 755 ${DESTDIR}/bin/${NAME}
+	@cp -f ${NAME} ${DESTDIR}/bin/${NAME}"_testing"
+	@chmod 755 ${DESTDIR}/bin/${NAME}"_testing"
 
 uninstall: ${NAME}
 	@echo removing executable file from ${DESTDIR}/bin
-	@rm -f ${DESTDIR}/bin/${NAME}
+	@rm -f ${DESTDIR}/bin/${NAME}"_testing"

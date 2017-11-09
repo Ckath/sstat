@@ -24,7 +24,9 @@ a simple personal status provider for bars similar to the one in dwm that just t
 - uid
 - uptime
 - username
-- volume percentage
+- volume percentage alsa
+- volume percentage pulse
+- profile of pulse volume
 - wifi essid
 - wifi signal percentage
 
