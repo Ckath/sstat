@@ -787,13 +787,17 @@ pulse_profile(void)
 static void
 pulse_context_state_cb(pa_context *c, void *userdata)
 {
+    pa_operation *o;
+
     switch(pa_context_get_state(c)) {
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_AUTHORIZING:
         case PA_CONTEXT_SETTING_NAME:
             break;
         case PA_CONTEXT_READY:
-            pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            assert(o);
+            pa_operation_unref(o);
             break;
         case PA_CONTEXT_FAILED:
         default:
