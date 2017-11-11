@@ -814,8 +814,7 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
     if (sink_info != NULL) {
         sprintf(pulse_profile_str, sink_info->name);
 
-        uint16_t vol = pa_cvolume_avg(&sink_info->volume) * 100 /
-            (PA_VOLUME_NORM-PA_VOLUME_MUTED);
+        pa_volume_t vol = pa_cvolume_avg(&sink_info->volume) * 100 / sink_info->base_volume;
 
         if (sink_info->mute) {
             sprintf(pulse_vol_str, VOL_MUTE_STR);
