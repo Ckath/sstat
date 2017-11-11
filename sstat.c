@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <linux/wireless.h>
 #include <netdb.h>
+#include <pulse/pulseaudio.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -22,7 +23,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
-#include <pulse/pulseaudio.h>
 
 typedef enum { STDOUT, XROOT } output;
 
@@ -47,6 +47,7 @@ static char *ip(const char *iface);
 static char *load_avg(void);
 static char *net_down(double *rx_old, const char *iface);
 static char *net_up(double *tx_old, const char *iface);
+static char *pulse_profile(void);
 static char *ram_free(void);
 static char *ram_perc(void);
 static char *ram_total(void);
@@ -62,13 +63,12 @@ static char *uptime(void);
 static char *username(void);
 static char *vol_perc_alsa(const char *card);
 static char *vol_perc_pulse(pa_threaded_mainloop *m);
-static char *pulse_profile(void);
 static char *wifi_essid(const char *iface);
 static char *wifi_perc(void);
-static void sighandler(const int signo);
-static void update_status(output dest, const char *str);
 static void pulse_context_state_cb(pa_context *c, void *userdata);
 static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
+static void sighandler(const int signo);
+static void update_status(output dest, const char *str);
 
 #include "config.h"
 
@@ -81,7 +81,6 @@ static  char pulse_profile_str[80] = UNKNOWN_STR;
     static char ret_str[len];\
     sprintf(ret_str, format, ##__VA_ARGS__);\
     return ret_str;
-
 
 static char *
 battery_perc(const char *bat)
@@ -787,15 +786,13 @@ pulse_profile(void)
 static void
 pulse_context_state_cb(pa_context *c, void *userdata)
 {
-    pa_operation *o;
-
     switch(pa_context_get_state(c)) {
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_AUTHORIZING:
         case PA_CONTEXT_SETTING_NAME:
             break;
-        case PA_CONTEXT_READY:
-            o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+        case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
+            pa_operation *o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
             assert(o);
             pa_operation_unref(o);
             break;
@@ -806,7 +803,6 @@ pulse_context_state_cb(pa_context *c, void *userdata)
 
             sprintf(pulse_vol_str, UNKNOWN_STR);
             sprintf(pulse_profile_str, UNKNOWN_STR);
-
             pa_context_unref(c);
             break;
     }
