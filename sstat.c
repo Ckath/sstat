@@ -814,14 +814,15 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
     if (sink_info != NULL) {
         sprintf(pulse_profile_str, sink_info->name);
 
-        pa_volume_t vol = pa_cvolume_avg(&sink_info->volume) * 100 / sink_info->base_volume;
+        pa_volume_t vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
+                / sink_info->base_volume + .5);
 
         if (sink_info->mute) {
             sprintf(pulse_vol_str, VOL_MUTE_STR);
         } else if (vol == 0) {
             sprintf(pulse_vol_str, VOL_ZERO_STR "%%");
         } else {
-            sprintf(pulse_vol_str, VOL_STR "%%", vol+1);
+            sprintf(pulse_vol_str, VOL_STR "%%", vol);
         }
         pa_context_unref(c);
     }
