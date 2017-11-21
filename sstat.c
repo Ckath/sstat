@@ -785,9 +785,12 @@ pulse_context_state_cb(pa_context *c, void *userdata)
             break;
         case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
             pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
-            pa_operation *o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK,
-                    NULL, NULL);
+            pa_operation *o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
             assert(o);
+
+            o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            assert(o);
+
             pa_operation_unref(o);
             break;
         case PA_CONTEXT_FAILED:
