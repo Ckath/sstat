@@ -67,6 +67,7 @@ static char *wifi_essid(const char *iface);
 static char *wifi_perc(void);
 static void pulse_context_state_cb(pa_context *c, void *userdata);
 static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
+static void pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 static void sighandler(const int signo);
 static void update_status(output dest, const char *str);
 
@@ -765,15 +766,6 @@ vol_perc_alsa(const char *card)
 static char *
 vol_perc_pulse(pa_threaded_mainloop *m)
 {
-    pa_threaded_mainloop_lock(m);
-
-    pa_context *c = pa_context_new(pa_threaded_mainloop_get_api(m), "sstat_volmon");
-    pa_context_set_state_callback(c, pulse_context_state_cb, NULL);
-    pa_context_connect(c, NULL, PA_CONTEXT_NOFLAGS, NULL);
-    assert(c);
-
-    pa_threaded_mainloop_unlock(m);
-
     RETURN_FORMAT(80, pulse_vol_str);
 }
 
@@ -792,7 +784,9 @@ pulse_context_state_cb(pa_context *c, void *userdata)
         case PA_CONTEXT_SETTING_NAME:
             break;
         case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
-            pa_operation *o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
+            pa_operation *o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK,
+                    NULL, NULL);
             assert(o);
             pa_operation_unref(o);
             break;
@@ -824,8 +818,16 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
         } else {
             sprintf(pulse_vol_str, VOL_STR "%%", vol);
         }
-        pa_context_unref(c);
     }
+}
+
+static void
+pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, 
+        uint32_t idx, void *userdata)
+{
+    pa_operation *o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+    assert(o);
+    pa_operation_unref(o);
 }
 
 static char *
@@ -1008,6 +1010,15 @@ main(int argc, char *argv[])
     pa_threaded_mainloop_start(m);
     assert(m);
 
+    pa_threaded_mainloop_lock(m);
+
+    pa_context *c = pa_context_new(pa_threaded_mainloop_get_api(m), "sstat_volmon");
+    pa_context_set_state_callback(c, pulse_context_state_cb, NULL);
+    pa_context_connect(c, NULL, PA_CONTEXT_NOFLAGS, NULL);
+    assert(c);
+
+    pa_threaded_mainloop_unlock(m);
+
     /* main loop, 
      * make sure to keep delay exactly one second */
     struct timeval tv;
@@ -1035,6 +1046,7 @@ main(int argc, char *argv[])
     }
 
     /* cleanup pulse */
+    pa_context_unref(c);
     pa_threaded_mainloop_stop(m);
     pa_threaded_mainloop_free(m);
 
