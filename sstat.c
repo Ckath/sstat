@@ -48,6 +48,7 @@ static char *load_avg(void);
 static char *net_down(double *rx_old, const char *iface);
 static char *net_up(double *tx_old, const char *iface);
 static char *pulse_profile(void);
+static char *pulse_profile_icon(void);
 static char *ram_free(void);
 static char *ram_perc(void);
 static char *ram_total(void);
@@ -775,6 +776,19 @@ pulse_profile(void)
     RETURN_FORMAT(80, pulse_profile_str);
 }
 
+static char *
+pulse_profile_icon(void)
+{
+    if (!strcmp(PULSE_HEADPHONE_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_HEADPHONE_ICON);
+    } else if (!strcmp(PULSE_SPEAKER_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_SPEAKER_ICON);
+    } else if (!strcmp(PULSE_HDMI_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_HDMI_ICON);
+    }
+    RETURN_FORMAT(10, UNKNOWN_STR);
+}
+
 static void
 pulse_context_state_cb(pa_context *c, void *userdata)
 {
@@ -785,7 +799,8 @@ pulse_context_state_cb(pa_context *c, void *userdata)
             break;
         case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
             pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
-            pa_operation *o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
+            pa_operation *o = 
+                pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
             assert(o);
 
             o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
@@ -793,7 +808,6 @@ pulse_context_state_cb(pa_context *c, void *userdata)
 
             pa_operation_unref(o);
             break;
-        case PA_CONTEXT_FAILED:
         default:
             fprintf(stderr, "pulse connection failure: %s\n",
                     pa_strerror(pa_context_errno(c)));
