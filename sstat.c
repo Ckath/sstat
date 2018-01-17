@@ -720,7 +720,7 @@ uid(void)
     RETURN_FORMAT(10, "%d", geteuid());
 }
 
-
+#ifndef PULSE
 static char *
 vol_perc_alsa(const char *card)
 {
@@ -763,7 +763,9 @@ vol_perc_alsa(const char *card)
         RETURN_FORMAT(20, VOL_STR, vol_perc);
     }
 }
+#endif
 
+#ifdef PULSE
 static char *
 vol_perc_pulse(pa_threaded_mainloop *m)
 {
@@ -846,6 +848,7 @@ pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t,
     assert(o);
     pa_operation_unref(o);
 }
+#endif
 
 static char *
 net_up(double *tx_old, const char *iface)
@@ -1018,9 +1021,11 @@ main(int argc, char *argv[])
 #define cpu_perc()          cpu_perc(ps_old)
 #define net_up(interface)   net_up(&tx_old, interface)
 #define net_down(interface) net_down(&rx_old, interface)
-#define vol_perc_pulse()    vol_perc_pulse(m)
     long double ps_old[4];
     double rx_old, tx_old;
+
+#ifdef PULSE
+#define vol_perc_pulse()    vol_perc_pulse(m)
 
     /* init pulseaudio */
     pa_threaded_mainloop *m = pa_threaded_mainloop_new();
@@ -1035,6 +1040,7 @@ main(int argc, char *argv[])
     assert(c);
 
     pa_threaded_mainloop_unlock(m);
+#endif
 
     /* main loop, 
      * make sure to keep delay exactly one second */
@@ -1062,10 +1068,12 @@ main(int argc, char *argv[])
         XCloseDisplay(display);
     }
 
+#ifdef PULSE
     /* cleanup pulse */
     pa_context_unref(c);
     pa_threaded_mainloop_stop(m);
     pa_threaded_mainloop_free(m);
+#endif
 
     return 0;
 }

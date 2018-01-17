@@ -6,6 +6,9 @@
 /* text to show if no value can be retrieved */
 #define UNKNOWN_STR          "n/a"
 
+/* this is needed to enable anything pulse */
+#define PULSE
+
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
 #define VOL_MUTE_STR         "mute"
@@ -27,8 +30,6 @@
 #define PULSE_HEADPHONE_ICON ""
 #define PULSE_SPEAKER_ICON   ""
 #define PULSE_HDMI_ICON      ""
-
-
 
 /* available functions
 - battery_perc [argument: battery name]         : battery percentage

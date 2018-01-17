@@ -3,6 +3,9 @@
 /* text to show if no value can be retrieved */
 #define UNKNOWN_STR          "n/a"
 
+/* this is needed to enable anything pulse */
+#define PULSE
+
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
 #define VOL_MUTE_STR         "muted"
