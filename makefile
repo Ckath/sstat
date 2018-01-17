@@ -37,9 +37,8 @@ clean:
 install: ${NAME}
 	@echo installing executable file to ${DESTDIR}/bin
 	@mkdir -p ${DESTDIR}/bin
-	@cp -f ${NAME} ${DESTDIR}/bin/${NAME}"_testing"
-	@chmod 755 ${DESTDIR}/bin/${NAME}"_testing"
-
+	@cp -f ${NAME} ${DESTDIR}/bin/${NAME}
+	@chmod 755 ${DESTDIR}/bin/${NAME}
 uninstall: ${NAME}
 	@echo removing executable file from ${DESTDIR}/bin
-	@rm -f ${DESTDIR}/bin/${NAME}"_testing"
+	@rm -f ${DESTDIR}/bin/${NAME}
