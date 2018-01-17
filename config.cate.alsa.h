@@ -1,22 +1,22 @@
 /* see LICENSE file for copyright and license information. */
 
+/* macro used for creating the 'icon' with dwm color patch vars */
+#define icon(str) "" str ""
+
 /* text to show if no value can be retrieved */
 #define UNKNOWN_STR          "n/a"
 
-/* this is needed to enable anything pulse */
-#define PULSE
-
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
-#define VOL_MUTE_STR         "muted"
-#define VOL_ZERO_STR         "0%%"
-#define VOL_STR              "%d%%"
+#define VOL_MUTE_STR         icon("") "mute"
+#define VOL_ZERO_STR         icon("") "0%%"
+#define VOL_STR              icon("") "%i%%"
 
 /* symbols/text for battery status */
-#define BATT_CHARGING_STR    "+"
-#define BATT_DISCHARGING_STR "-"
-#define BATT_FULL_STR        "="
-#define BATT_UNKNOWN_STR     "?"
+#define BATT_CHARGING_STR    ""
+#define BATT_DISCHARGING_STR ""
+#define BATT_FULL_STR        ""
+#define BATT_UNKNOWN_STR     ""
 
 /* available functions
 - battery_perc [argument: battery name]         : battery percentage
@@ -57,12 +57,36 @@
 - vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
 - pulse_profile [argument: none]                : profile of pulse volume being displayed, 
                                                 only while vol_perc_pulse is in use
+- pulse_profile_icon [argument: none]           : same as pulse_profile but use predefined
+                                                icons instead of full name| see defs above
 - wifi_essid [argument: wifi card interface]    : wifi essid 
 - wifi_perc [argument: none]                    : wifi signal in percent */
 
-#define STATUS_FORMAT "vol: %s[%s] bat: %s[%s] wifi: %s[%s] | %s"
+/*                                          FORMAT */
+#define STATUS_FORMAT \
+    "情報%s"                                /* volume */\
+    icon("") "%s %s%s"                    /* battery */\
+    icon("") "%s %.2s/%.3sGB"            /* disk */\
+    icon("") "%s %s %s %s"             /* net */\
+    icon("") "%s %2s %.5sGB %s %s"    /* sys */\
+    "%s"                                  /* datetime */
+
+/*                                          CONTENT */
 #define STATUS_CONTENT \
-    pulse_profile(), vol_perc_pulse(), \
-    battery_perc("BAT0"), battery_state("BAT0"), \
-    wifi_essid("wlp3s0"), wifi_perc(),\
-    datetime("%x %X")
+    vol_perc_alsa("hw:0"),                  /* volume */\
+    battery_time_smapi("BAT0"),             /* battery */\
+    battery_state_smapi("BAT0"),\
+    battery_perc_smapi("BAT0"),\
+    disk_io(),                              /* disk */\
+    disk_used("/"),\
+    disk_total("/"),\
+    ip("wlp3s0"),                           /* net */\
+    wifi_perc(),\
+    net_up("wlp3s0"),\
+    net_down("wlp3s0"),\
+    cpu_freq(),                             /* sys */\
+    cpu_perc(),\
+    ram_used(),\
+    temp("/sys/class/hwmon/hwmon0/temp1_input"),\
+    fan_ibm(),\
+    datetime("%F %T")                       /* datetime */

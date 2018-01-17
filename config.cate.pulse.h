@@ -6,17 +6,30 @@
 /* text to show if no value can be retrieved */
 #define UNKNOWN_STR          "n/a"
 
+/* this is needed to enable anything pulse */
+#define PULSE
+
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
-#define VOL_MUTE_STR         icon("") "mute"
-#define VOL_ZERO_STR         icon("") "0%%"
-#define VOL_STR              icon("") "%i%%"
+#define VOL_MUTE_STR         "mute"
+#define VOL_ZERO_STR         "0%%"
+#define VOL_STR              "%i%%"
 
 /* symbols/text for battery status */
 #define BATT_CHARGING_STR    ""
 #define BATT_DISCHARGING_STR ""
 #define BATT_FULL_STR        ""
 #define BATT_UNKNOWN_STR     ""
+
+/* profiles for identifying pulse outputs */
+#define PULSE_HEADPHONE_STR  "alsa_output.pci-0000_00_1b.0.analog-stereo"
+#define PULSE_SPEAKER_STR    "alsa_output.pci-0000_00_1b.0.analog-surround-40"
+#define PULSE_HDMI_STR       "alsa_output.pci-0000_00_1b.0.hdmi-stereo"
+
+/* icons for displaying active pulse output */
+#define PULSE_HEADPHONE_ICON ""
+#define PULSE_SPEAKER_ICON   ""
+#define PULSE_HDMI_ICON      ""
 
 /* available functions
 - battery_perc [argument: battery name]         : battery percentage
@@ -53,35 +66,41 @@
 - uid [argument: none]                          : uid of current user 
 - uptime [argument: none]                       : uptime 
 - username [argument: none]                     : username of current user 
-- vol_perc [argument: soundcard]                : alsa volume and mute status in percent 
+- vol_perc_alsa [argument: soundcard]           : alsa volume and mute status in percent 
+- vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
+- pulse_profile [argument: none]                : profile of pulse volume being displayed, 
+                                                only while vol_perc_pulse is in use
+- pulse_profile_icon [argument: none]           : same as pulse_profile but use predefined
+                                                icons instead of full name| see defs above
 - wifi_essid [argument: wifi card interface]    : wifi essid 
 - wifi_perc [argument: none]                    : wifi signal in percent */
 
-/*                                          FORMAT */
+/*                                      FORMAT */
 #define STATUS_FORMAT \
-    "情報%s"                                /* volume */\
-    icon("") "%s %s%s"                    /* battery */\
-    icon("") "%s %.2s/%.3sGB"            /* disk */\
-    icon("") "%s %s %s %s"             /* net */\
-    icon("") "%s %2s %.5sGB %s %s"    /* sys */\
-    "%s"                                  /* datetime */
+    "情報" icon("%s") "%s"           /* volume */\
+    icon("") "%s %s%s"             /* battery */\
+    icon("") "%s %.2s/%.3sGB"     /* disk */\
+    icon("") "%s %s %s %s"      /* net */\
+    icon("") "%s %2s %.5sGB %s %s" /* sys */\
+    "%s"                           /* datetime */
 
-/*                                          CONTENT */
+/*                                      CONTENT */
 #define STATUS_CONTENT \
-    vol_perc("hw:0"),                       /* volume */\
-    battery_time_smapi("BAT0"),             /* battery */\
+    pulse_profile_icon(),            /* volume */\
+    vol_perc_pulse(),\
+    battery_time_smapi("BAT0"),      /* battery */\
     battery_state_smapi("BAT0"),\
     battery_perc_smapi("BAT0"),\
-    disk_io(),                              /* disk */\
+    disk_io(),                       /* disk */\
     disk_used("/"),\
     disk_total("/"),\
-    ip("wlp3s0"),                           /* net */\
+    ip("wlp3s0"),                    /* net */\
     wifi_perc(),\
     net_up("wlp3s0"),\
     net_down("wlp3s0"),\
-    cpu_freq(),                             /* sys */\
+    cpu_freq(),                      /* sys */\
     cpu_perc(),\
     ram_used(),\
     temp("/sys/class/hwmon/hwmon0/temp1_input"),\
     fan_ibm(),\
-    datetime("%F %T")                       /* datetime */
+    datetime("%F %T")               /* datetime */

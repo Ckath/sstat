@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <linux/wireless.h>
 #include <netdb.h>
+#include <pulse/pulseaudio.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -46,6 +47,8 @@ static char *ip(const char *iface);
 static char *load_avg(void);
 static char *net_down(double *rx_old, const char *iface);
 static char *net_up(double *tx_old, const char *iface);
+static char *pulse_profile(void);
+static char *pulse_profile_icon(void);
 static char *ram_free(void);
 static char *ram_perc(void);
 static char *ram_total(void);
@@ -59,21 +62,27 @@ static char *temp(const char *file);
 static char *uid(void);
 static char *uptime(void);
 static char *username(void);
-static char *vol_perc(const char *card);
+static char *vol_perc_alsa(const char *card);
+static char *vol_perc_pulse(pa_threaded_mainloop *m);
 static char *wifi_essid(const char *iface);
 static char *wifi_perc(void);
+static void pulse_context_state_cb(pa_context *c, void *userdata);
+static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
+static void pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 static void sighandler(const int signo);
 static void update_status(output dest, const char *str);
 
+#include "config.h"
+
 static unsigned short int done;
 static Display *display;
+static char pulse_vol_str[80] = UNKNOWN_STR;
+static  char pulse_profile_str[80] = UNKNOWN_STR;
 
 #define RETURN_FORMAT(len, format, ...)\
     static char ret_str[len];\
     sprintf(ret_str, format, ##__VA_ARGS__);\
     return ret_str;
-
-#include "config.h"
 
 static char *
 battery_perc(const char *bat)
@@ -711,9 +720,9 @@ uid(void)
     RETURN_FORMAT(10, "%d", geteuid());
 }
 
-
+#ifndef PULSE
 static char *
-vol_perc(const char *card)
+vol_perc_alsa(const char *card)
 {
     int mute;
     long int vol, max, min;
@@ -754,6 +763,92 @@ vol_perc(const char *card)
         RETURN_FORMAT(20, VOL_STR, vol_perc);
     }
 }
+#endif
+
+#ifdef PULSE
+static char *
+vol_perc_pulse(pa_threaded_mainloop *m)
+{
+    RETURN_FORMAT(80, pulse_vol_str);
+}
+
+static char *
+pulse_profile(void)
+{
+    RETURN_FORMAT(80, pulse_profile_str);
+}
+
+static char *
+pulse_profile_icon(void)
+{
+    if (!strcmp(PULSE_HEADPHONE_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_HEADPHONE_ICON);
+    } else if (!strcmp(PULSE_SPEAKER_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_SPEAKER_ICON);
+    } else if (!strcmp(PULSE_HDMI_STR, pulse_profile_str)) {
+        RETURN_FORMAT(80, PULSE_HDMI_ICON);
+    }
+    RETURN_FORMAT(10, UNKNOWN_STR);
+}
+
+static void
+pulse_context_state_cb(pa_context *c, void *userdata)
+{
+    switch(pa_context_get_state(c)) {
+        case PA_CONTEXT_CONNECTING:
+        case PA_CONTEXT_AUTHORIZING:
+        case PA_CONTEXT_SETTING_NAME:
+            break;
+        case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
+            pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
+            pa_operation *o = 
+                pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
+            assert(o);
+
+            o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+            assert(o);
+
+            pa_operation_unref(o);
+            break;
+        default:
+            fprintf(stderr, "pulse connection failure: %s\n",
+                    pa_strerror(pa_context_errno(c)));
+
+            sprintf(pulse_vol_str, UNKNOWN_STR);
+            sprintf(pulse_profile_str, UNKNOWN_STR);
+            pa_context_unref(c);
+            break;
+    }
+}
+
+static void
+pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata)
+{
+    if (sink_info != NULL) {
+        sprintf(pulse_profile_str, sink_info->name);
+
+        pa_volume_t vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
+                / sink_info->base_volume + .5);
+
+        if (sink_info->mute) {
+            sprintf(pulse_vol_str, VOL_MUTE_STR);
+        } else if (vol == 0) {
+            sprintf(pulse_vol_str, VOL_ZERO_STR "%%");
+        } else {
+            sprintf(pulse_vol_str, VOL_STR "%%", vol);
+        }
+    }
+}
+
+static void
+pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, 
+        uint32_t idx, void *userdata)
+{
+    pa_operation *o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
+    assert(o);
+    pa_operation_unref(o);
+}
+#endif
 
 static char *
 net_up(double *tx_old, const char *iface)
@@ -929,6 +1024,24 @@ main(int argc, char *argv[])
     long double ps_old[4];
     double rx_old, tx_old;
 
+#ifdef PULSE
+#define vol_perc_pulse()    vol_perc_pulse(m)
+
+    /* init pulseaudio */
+    pa_threaded_mainloop *m = pa_threaded_mainloop_new();
+    pa_threaded_mainloop_start(m);
+    assert(m);
+
+    pa_threaded_mainloop_lock(m);
+
+    pa_context *c = pa_context_new(pa_threaded_mainloop_get_api(m), "sstat_volmon");
+    pa_context_set_state_callback(c, pulse_context_state_cb, NULL);
+    pa_context_connect(c, NULL, PA_CONTEXT_NOFLAGS, NULL);
+    assert(c);
+
+    pa_threaded_mainloop_unlock(m);
+#endif
+
     /* main loop, 
      * make sure to keep delay exactly one second */
     struct timeval tv;
@@ -954,6 +1067,13 @@ main(int argc, char *argv[])
         update_status(dest, NULL);
         XCloseDisplay(display);
     }
+
+#ifdef PULSE
+    /* cleanup pulse */
+    pa_context_unref(c);
+    pa_threaded_mainloop_stop(m);
+    pa_threaded_mainloop_free(m);
+#endif
 
     return 0;
 }

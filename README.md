@@ -1,3 +1,7 @@
+> if you keep taping a product back together, are you left with anything other than tape in the end?
+> 
+> -Ckat
+
 a simple personal status provider for bars similar to the one in dwm that just take a string of text either through stdin or xroot window title, started as a fork of an old [slstatus ](https://github.com/drkhsh/slstatus) most of the codebase has been rewritten since.
 
 ## info functions and features
@@ -24,7 +28,9 @@ a simple personal status provider for bars similar to the one in dwm that just t
 - uid
 - uptime
 - username
-- volume percentage
+- volume percentage alsa
+- volume percentage pulse
+- current pulse profile
 - wifi essid
 - wifi signal percentage
 
@@ -37,7 +43,7 @@ sstat has a fixed refresh execution time adjusted interval of 1 second, this is 
 4. go back to step 2
 
 ## configuration
-config.h will contain a bunch of hopefully helpful explanations of the functions available, a more advanced setup example(what I personally use) is also given in the `config.cate.h` file. the main idea is you define your status similar to how you would construct a typical printf, you provide a format and content in the form of functions to make up you final status string.
+config.h will contain a bunch of hopefully helpful explanations of the functions available,  more advanced setup examples(personally configs) are also given in the `config.cate.*` files. the main idea is you define your status similar to how you would construct a typical printf, you provide a format and content in the form of functions to make up you final status string. something to keep in mind `PULSE` has to be defined for any pulse functionality.
 
 ## usage
 it's suggested you start sstat with `sstat -d` from your startup script or other means
