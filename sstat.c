@@ -47,8 +47,6 @@ static char *ip(const char *iface);
 static char *load_avg(void);
 static char *net_down(double *rx_old, const char *iface);
 static char *net_up(double *tx_old, const char *iface);
-static char *pulse_profile(void);
-static char *pulse_profile_icon(void);
 static char *ram_free(void);
 static char *ram_perc(void);
 static char *ram_total(void);
@@ -63,12 +61,8 @@ static char *uid(void);
 static char *uptime(void);
 static char *username(void);
 static char *vol_perc_alsa(const char *card);
-static char *vol_perc_pulse(pa_threaded_mainloop *m);
 static char *wifi_essid(const char *iface);
 static char *wifi_perc(void);
-static void pulse_context_state_cb(pa_context *c, void *userdata);
-static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
-static void pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 static void sighandler(const int signo);
 static void update_status(output dest, const char *str);
 
@@ -76,8 +70,22 @@ static void update_status(output dest, const char *str);
 
 static unsigned short int done;
 static Display *display;
+
+/* pulse garbage */
+#ifdef PULSE
+static char *pulse_profile(void);
+static char *pulse_profile_icon(void);
+static char *vol_perc_pulse(void);
+static char *micvol_perc_pulse(void);
+static void pulse_context_state_cb(pa_context *c, void *userdata);
+static void pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata);
+static void pulse_source_info_cb(pa_context *c, const pa_source_info *source_info, int eol, void *userdata);
+static void pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
+
 static char pulse_vol_str[80] = UNKNOWN_STR;
+static char pulse_micvol_str[80] = UNKNOWN_STR;
 static  char pulse_profile_str[80] = UNKNOWN_STR;
+#endif
 
 #define RETURN_FORMAT(len, format, ...)\
     static char ret_str[len];\
@@ -767,9 +775,15 @@ vol_perc_alsa(const char *card)
 
 #ifdef PULSE
 static char *
-vol_perc_pulse(pa_threaded_mainloop *m)
+vol_perc_pulse(void)
 {
     RETURN_FORMAT(80, pulse_vol_str);
+}
+
+static char *
+micvol_perc_pulse(void)
+{
+    RETURN_FORMAT(80, pulse_micvol_str);
 }
 
 static char *
@@ -801,14 +815,9 @@ pulse_context_state_cb(pa_context *c, void *userdata)
             break;
         case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
             pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
-            pa_operation *o = 
-                pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK, NULL, NULL);
-            assert(o);
-
-            o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
-            assert(o);
-
-            pa_operation_unref(o);
+            pa_operation_unref(pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_ALL, NULL, NULL));
+            pa_operation_unref(pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL));
+            pa_operation_unref(pa_context_get_source_info_list(c, pulse_source_info_cb, NULL));
             break;
         default:
             fprintf(stderr, "pulse connection failure: %s\n",
@@ -824,11 +833,11 @@ pulse_context_state_cb(pa_context *c, void *userdata)
 static void
 pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata)
 {
-    if (sink_info != NULL) {
+    if (sink_info && sink_info->index == SINK_INDEX) {
         sprintf(pulse_profile_str, sink_info->name);
 
         pa_volume_t vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
-                / sink_info->base_volume + .5);
+                / (sink_info->n_volume_steps-1) + .5);
 
         if (sink_info->mute) {
             sprintf(pulse_vol_str, VOL_MUTE_STR);
@@ -841,12 +850,28 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
 }
 
 static void
+pulse_source_info_cb(pa_context *c, const pa_source_info *source_info, int eol, void *userdata)
+{
+    if (source_info && source_info->index == SOURCE_INDEX) {
+        pa_volume_t vol = (int)(pa_cvolume_avg(&source_info->volume) * 100.0 
+                / (source_info->n_volume_steps-1) + .5);
+
+        if (source_info->mute) {
+            sprintf(pulse_micvol_str, VOL_MUTE_STR);
+        } else if (vol == 0) {
+            sprintf(pulse_micvol_str, VOL_ZERO_STR "%%");
+        } else {
+            sprintf(pulse_micvol_str, VOL_STR "%%", vol);
+        }
+    }
+}
+
+static void
 pulse_volume_change_cb(pa_context *c, pa_subscription_event_type_t t, 
         uint32_t idx, void *userdata)
 {
-    pa_operation *o = pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL);
-    assert(o);
-    pa_operation_unref(o);
+    pa_operation_unref(pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL));
+    pa_operation_unref(pa_context_get_source_info_list(c, pulse_source_info_cb, NULL));
 }
 #endif
 
@@ -1025,7 +1050,6 @@ main(int argc, char *argv[])
     double rx_old, tx_old;
 
 #ifdef PULSE
-#define vol_perc_pulse()    vol_perc_pulse(m)
 
     /* init pulseaudio */
     pa_threaded_mainloop *m = pa_threaded_mainloop_new();

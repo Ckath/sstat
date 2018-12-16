@@ -57,7 +57,7 @@ it's suggested you start sstat with `sstat -d` from your startup script or other
         -h print this info and exit
 
 ## todo
-- redo audio/add pulseaudio support
+- redo/cleanup pulse implementation
 - more system info functions
 
 ## bugs and contribution
