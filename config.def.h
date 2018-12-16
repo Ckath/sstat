@@ -5,6 +5,8 @@
 
 /* this is needed to enable anything pulse */
 #define PULSE
+#define SINK_INDEX 0
+#define SOURCE_INDEX 1
 
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
@@ -55,8 +57,11 @@
 - username [argument: none]                     : username of current user 
 - vol_perc_alsa [argument: soundcard]           : alsa volume and mute status in percent 
 - vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
+- micvol_perc_pulse [argument: none]            : pulse mic volume and mute status in percent
 - pulse_profile [argument: none]                : profile of pulse volume being displayed, 
                                                 only while vol_perc_pulse is in use
+- pulse_profile_icon [argument: none]           : same as pulse_profile but use predefined
+                                                icons instead of full name| see defs above
 - wifi_essid [argument: wifi card interface]    : wifi essid 
 - wifi_perc [argument: none]                    : wifi signal in percent */
 

@@ -8,6 +8,8 @@
 
 /* this is needed to enable anything pulse */
 #define PULSE
+#define SINK_INDEX 0
+#define SOURCE_INDEX 1
 
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
@@ -68,6 +70,7 @@
 - username [argument: none]                     : username of current user 
 - vol_perc_alsa [argument: soundcard]           : alsa volume and mute status in percent 
 - vol_perc_pulse [argument: none]               : pulse volume and mute status in percent 
+- micvol_perc_pulse [argument: none]            : pulse mic volume and mute status in percent
 - pulse_profile [argument: none]                : profile of pulse volume being displayed, 
                                                 only while vol_perc_pulse is in use
 - pulse_profile_icon [argument: none]           : same as pulse_profile but use predefined
@@ -77,15 +80,17 @@
 
 /*                                      FORMAT */
 #define STATUS_FORMAT \
-    "情報" icon("") "%s"           /* volume */\
+    "情報" icon("")                 /* volume */\
+    "%s" icon("") "%s"\
     icon("") "%s %.2s/%.3sGB"     /* disk */\
-    icon("") "%s %s %s"      /* net */\
-    icon("") "%2s %.5sGB %s " /* sys */\
+    icon("") "%s %s %s"          /* net */\
+    icon("") "%2s %.5sGB %s "    /* sys */\
     "%s"                           /* datetime */
 
 /*                                      CONTENT */
 #define STATUS_CONTENT \
-    vol_perc_pulse(),	             /* volume */\
+    micvol_perc_pulse(),	         /* volume */\
+    vol_perc_pulse(),\
     disk_io(),                       /* disk */\
     disk_used("/"),\
     disk_total("/"),\
