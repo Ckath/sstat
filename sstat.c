@@ -815,7 +815,7 @@ pulse_context_state_cb(pa_context *c, void *userdata)
             break;
         case PA_CONTEXT_READY:; /* <- note the semi-colon, very important */
             pa_context_set_subscribe_callback(c, pulse_volume_change_cb, NULL);
-            pa_operation_unref(pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_ALL, NULL, NULL));
+            pa_operation_unref(pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE, NULL, NULL));
             pa_operation_unref(pa_context_get_sink_info_list(c, pulse_sink_info_cb, NULL));
             pa_operation_unref(pa_context_get_source_info_list(c, pulse_source_info_cb, NULL));
             break;
