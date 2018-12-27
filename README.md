@@ -30,6 +30,7 @@ a simple personal status provider for bars similar to the one in dwm that just t
 - username
 - volume percentage alsa
 - volume percentage pulse
+- micvolume percentage pulse
 - current pulse profile
 - wifi essid
 - wifi signal percentage
