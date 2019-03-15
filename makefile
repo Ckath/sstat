@@ -6,7 +6,7 @@ VERSION = 0.2
 CC = gcc
 SRC = ${NAME}.c
 OBJ = ${SRC:.c=.o}
-CFLAGS = `pkg-config --libs libpulse x11 alsa` -Wno-discarded-qualifiers -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wall -Wextra -Os -DVERSION=\"${VERSION}\" -D_GNU_SOURCE
+CFLAGS = `pkg-config --libs libpulse x11 alsa` -Wno-discarded-qualifiers -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wall -Wextra -Wno-format-overflow -Os -DVERSION=\"${VERSION}\" -D_GNU_SOURCE
 DESTDIR = /usr/local
 
 all: options ${NAME}

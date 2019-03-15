@@ -288,7 +288,7 @@ datetime(const char *fmt)
         RETURN_FORMAT(10, UNKNOWN_STR);
     }
 
-    RETURN_FORMAT(50, "%s", str);
+    RETURN_FORMAT(80, "%s", str);
 }
 
 static char *
