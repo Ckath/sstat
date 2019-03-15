@@ -7,6 +7,12 @@
 #define PULSE
 #define SINK_INDEX 0
 #define SOURCE_INDEX 1
+#define PULSE_HEADPHONE_STR  "alsa_output.pci-0000_00_1b.0.analog-stereo"
+#define PULSE_SPEAKER_STR    "alsa_output.pci-0000_00_1b.0.analog-surround-40"
+#define PULSE_HDMI_STR       "alsa_output.pci-0000_00_1b.0.hdmi-stereo"
+#define PULSE_HEADPHONE_ICON "H"
+#define PULSE_SPEAKER_ICON   "S"
+#define PULSE_HDMI_ICON      "M"
 
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */
