@@ -22,6 +22,7 @@
 - battery_perc [argument: battery name]         : battery percentage
 - battery_perc_smapi [argument: battery name]   : battery percentage, uses smapi 
 - battery_state [argument: battery name]        : battery charging state
+- battery_time [argument: battery name]         : time till empty
 - battery_state_smapi [argument: battery name]  : battery charging state, uses smapi 
 - battery_time_smapi [argument: battery name]   : time till full/empty, uses smapi 
 - cpu_freq [argument: none]                     : cpu frequency in MHz 

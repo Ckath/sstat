@@ -7,7 +7,8 @@ a simple personal status provider for bars similar to the one in dwm that just t
 ## info functions and features
 - battery percentage
 - battery state
-- battery time left (through smapi)
+- battery time left
+- battery smapi info
 - cpu frequency
 - cpu percentage
 - datetime

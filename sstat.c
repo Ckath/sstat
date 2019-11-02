@@ -29,6 +29,7 @@ typedef enum { STDOUT, XROOT } output;
 static char *battery_perc(const char *bat);
 static char *battery_perc_smapi(const char *bat);
 static char *battery_state(const char *bat);
+static char *battery_time(const char *bat);
 static char *battery_state_smapi(const char *bat);
 static char *battery_time_smapi(const char *bat);
 static char *cpu_freq(void);
@@ -136,6 +137,41 @@ battery_state(const char *bat)
     } else {
         RETURN_FORMAT(20, BATT_UNKNOWN_STR);
     }
+}
+
+static char *
+battery_time(const char *bat)
+{
+    char path[50];
+    int energy;
+    int power;
+    FILE *fp;
+
+    sprintf(path, "/sys/class/power_supply/%s/energy_now", bat);
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        warn("Failed to open file %s", path);
+        RETURN_FORMAT(10, UNKNOWN_STR);
+    }
+    fscanf(fp, "%d", &energy);
+    fclose(fp);
+
+    sprintf(path, "/sys/class/power_supply/%s/power_now", bat);
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        warn("Failed to open file %s", path);
+        RETURN_FORMAT(10, UNKNOWN_STR);
+    }
+    fscanf(fp, "%d", &power);
+    fclose(fp);
+
+    if (!power || !energy) {
+        RETURN_FORMAT(10, UNKNOWN_STR);
+    }
+
+    int hours = energy/power;
+    int minutes = (((double)energy/power)-hours)*60;
+    RETURN_FORMAT(20, "%02d:%02d", hours, minutes);
 }
 
 static char *
