@@ -8,8 +8,8 @@
 
 /* this is needed to enable anything pulse */
 #define PULSE
-#define SINK_INDEX 0
-#define SOURCE_INDEX 1
+#define SINK_MATCH "IEC958"
+#define SOURCE_MATCH "RODE"
 
 /* volume symbols/text, 
  * %i is only needed for VOL_STR */

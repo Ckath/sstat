@@ -869,7 +869,7 @@ pulse_context_state_cb(pa_context *c, void *userdata)
 static void
 pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *userdata)
 {
-    if (sink_info && sink_info->index == SINK_INDEX) {
+    if (sink_info && strstr(sink_info->description, SINK_MATCH)) {
         sprintf(pulse_profile_str, sink_info->name);
 
         pa_volume_t vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
@@ -888,7 +888,7 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
 static void
 pulse_source_info_cb(pa_context *c, const pa_source_info *source_info, int eol, void *userdata)
 {
-    if (source_info && source_info->index == SOURCE_INDEX) {
+    if (source_info && strstr(source_info->description, SOURCE_MATCH)) {
         pa_volume_t vol = (int)(pa_cvolume_avg(&source_info->volume) * 100.0 
                 / (source_info->n_volume_steps-1) + .5);
 
