@@ -58,6 +58,7 @@ static char *swap_perc(void);
 static char *swap_total(void);
 static char *swap_used(void);
 static char *temp(const char *file);
+static char *temp_workaround(const char *file, const char *file_);
 static char *uid(void);
 static char *uptime(void);
 static char *username(void);
@@ -722,6 +723,25 @@ temp(const char *file)
     fp = fopen(file, "r");
     if (fp == NULL) {
         warn("Failed to open file %s", file);
+        RETURN_FORMAT(10, UNKNOWN_STR);
+    }
+    fscanf(fp, "%d", &temp);
+    fclose(fp);
+
+    RETURN_FORMAT(20, "%d°C", temp / 1000);
+}
+
+static char *
+temp_workaround(const char *file, const char *file_)
+{
+    int temp;
+    FILE *fp;
+
+    fp = fopen(file, "r");
+    if (fp == NULL) {
+        fp = fopen(file_, "r");
+    } if (fp == NULL) {
+        warn("Failed to open files %s and %s", file, file_);
         RETURN_FORMAT(10, UNKNOWN_STR);
     }
     fscanf(fp, "%d", &temp);

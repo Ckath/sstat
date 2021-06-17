@@ -66,6 +66,7 @@
 - swap_total [argument: none]                   : total swap in GB 
 - swap_used [argument: none]                    : used swap in GB 
 - temp [argument: temperature file]             : temperature in celsius 
+- temp_workaround [argument: two locations]     : temperature in celsius, in case locations change
 - uid [argument: none]                          : uid of current user 
 - uptime [argument: none]                       : uptime 
 - username [argument: none]                     : username of current user 
@@ -100,5 +101,5 @@
     net_down("enp3s0"),\
     cpu_perc(),                      /* sys */\
     ram_used(),\
-    temp("/sys/class/hwmon/hwmon0/temp1_input"),\
+    temp_workaround("/sys/class/hwmon/hwmon0/temp1_input", "/sys/class/hwmon/hwmon1/temp1_input"),\
     datetime("%F %T")               /* datetime */
