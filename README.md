@@ -1,7 +1,3 @@
-> if you keep taping a product back together, are you left with anything other than tape in the end?
-> 
-> -Ckat
-
 a simple personal status provider for bars similar to the one in dwm that just take a string of text either through stdin or xroot window title, started as a fork of an old [slstatus ](https://github.com/drkhsh/slstatus) most of the codebase has been rewritten since.
 
 ## info functions and features
