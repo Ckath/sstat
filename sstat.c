@@ -895,6 +895,11 @@ pulse_sink_info_cb(pa_context *c, const pa_sink_info *sink_info, int eol, void *
         pa_volume_t vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
                 / (sink_info->n_volume_steps-1) + .5);
 
+		if (!sink_info->n_volume_steps) {
+			vol = (int)(pa_cvolume_avg(&sink_info->volume) * 100.0 
+							/ (65500-1) + .5);
+		}
+
         if (sink_info->mute) {
             sprintf(pulse_vol_str, VOL_MUTE_STR);
         } else if (vol == 0) {
@@ -911,6 +916,11 @@ pulse_source_info_cb(pa_context *c, const pa_source_info *source_info, int eol, 
     if (source_info && strstr(source_info->description, SOURCE_MATCH)) {
         pa_volume_t vol = (int)(pa_cvolume_avg(&source_info->volume) * 100.0 
                 / (source_info->n_volume_steps-1) + .5);
+
+		if (!source_info->n_volume_steps) {
+			vol = (int)(pa_cvolume_avg(&source_info->volume) * 100.0 
+							/ (65500-1) + .5);
+		}
 
         if (source_info->mute) {
             sprintf(pulse_micvol_str, VOL_MUTE_STR);
