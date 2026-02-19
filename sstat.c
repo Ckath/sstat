@@ -962,12 +962,12 @@ net_up(double *tx_old, const char *iface)
 
     if (tx_val < 1000) {
         RETURN_FORMAT(20, "%-4.3g B/s", tx_val);
-    } else if (tx_val < 1024000) {
-        RETURN_FORMAT(20, "%-4.3gKB/s", tx_val/1024.0);
-    } else if (tx_val < 1024000000){
-        RETURN_FORMAT(20, "%-4.3gMB/s", tx_val/1048576.0);
+    } else if (tx_val < 1000000) {
+        RETURN_FORMAT(20, "%-4.3gKB/s", tx_val/1000.0);
+    } else if (tx_val < 1000000000){
+        RETURN_FORMAT(20, "%-4.3gMB/s", tx_val/1000000.0);
     } else {
-        RETURN_FORMAT(20, "%-4.3gGB/s", tx_val/1073741824.0);
+        RETURN_FORMAT(20, "%-4.3gGB/s", tx_val/1000000000.0);
 	}
 }
 
@@ -992,12 +992,12 @@ net_down(double *rx_old, const char *iface)
 
     if (rx_val < 1000) {
         RETURN_FORMAT(20, "%-4.3g B/s", rx_val);
-    } else if (rx_val < 1024000) {
-        RETURN_FORMAT(20, "%-4.3gKB/s", rx_val/1024.0);
-    } else if (rx_val < 1024000000){
-        RETURN_FORMAT(20, "%-4.3gMB/s", rx_val/1048576.0);
+    } else if (rx_val < 1000000) {
+        RETURN_FORMAT(20, "%-4.3gKB/s", rx_val/1000.0);
+    } else if (rx_val < 1000000000){
+        RETURN_FORMAT(20, "%-4.3gMB/s", rx_val/1000000.0);
     } else {
-        RETURN_FORMAT(20, "%-4.3gGB/s", rx_val/1073741824.0);
+        RETURN_FORMAT(20, "%-4.3gGB/s", rx_val/1000000000.0);
 	}
 }
 
