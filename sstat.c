@@ -538,7 +538,7 @@ ram_total(void)
 static char *
 ram_used(void)
 {
-    long free, total, buffers, cached;
+    long total, avail;
     FILE *fp;
 
     fp = fopen("/proc/meminfo", "r");
@@ -547,12 +547,10 @@ ram_used(void)
         RETURN_FORMAT(10, UNKNOWN_STR);
     }
     fscanf(fp, "MemTotal: %ld kB\n", &total);
-    fscanf(fp, "MemFree: %ld kB\n", &free);
-    fscanf(fp, "MemAvailable: %ld kB\nBuffers: %ld kB\n", &buffers, &buffers);
-    fscanf(fp, "Cached: %ld kB\n", &cached);
+    fscanf(fp, "MemFree: %*d kB\nMemAvailable: %ld kB\n", &avail);
     fclose(fp);
 
-    RETURN_FORMAT(10, "%f", (float)(total - free - buffers - cached) / 1024 / 1024);
+    RETURN_FORMAT(10, "%f", (float)(total - avail) / 1024 / 1024);
 }
 
 static char *
